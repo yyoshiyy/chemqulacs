@@ -9,11 +9,34 @@ Chemqulacs includes quantum chemistry code running on quantum circuit simulators
 
 ## Installation
 
-Chemqulacs requires Python 3.9.8 or later.
+Chemqulacs uses QURI Parts 0.20.3 with Python 3.10 or 3.11. For a locked
+checkout, install with Poetry 2.3 or newer (2.x):
 
+```sh
+poetry install
+poetry run python scripts/install_smoke.py
 ```
-pip install git+https://github.com/wmizukami/chemqulacs.git
+
+Poetry automatically applies the build constraints for the two IBM SDK
+packages. For pip, install into a dedicated virtual environment:
+
+```sh
+python -m pip install "pip>=25.3"
+python -m pip install --build-constraint requirements/build-constraints.txt .
+python -m pip check
+python scripts/install_smoke.py
 ```
+
+The standard install includes Braket, Qiskit and OQTOPUS. The OQTOPUS client
+requires `urllib3<2.1`, while the newer IBM SDK wheels require `urllib3>=2.1`.
+The compatible IBM SDK releases are available only as source archives and
+need older build tooling. The constraints file applies to builds only; bare
+`pip install .` or `pip install git+...` can fail without it on a clean cache.
+Prefer Poetry on Intel macOS, where newer transitive dependencies may not
+provide compatible wheels.
+
+The smoke test uses local simulation and does not need credentials.
+Configure credentials separately to use managed devices.
 
 ## Usage
 
