@@ -9,34 +9,37 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-latest"]
-        python-version: ["3.9"]
+        python-version: ["3.10", "3.11"]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
-          version: 1.4.0
+          version: 2.3.0
           virtualenvs-create: true
           virtualenvs-in-project: true
 
-      - name: Load cached venv
-        id: cached-poetry-deps
-        uses: actions/cache@v2
+      - name: Cache downloaded dependencies
+        uses: actions/cache@v5
         with:
-          path: ./.venv
-          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
-
-      - name: Install dependencies
-        if: steps.cached-poetry-deps.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root
+          path: ${{ runner.os == 'macOS' && '~/Library/Caches/pypoetry' || '~/.cache/pypoetry' }}
+          key: poetry-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('poetry.lock', 'pyproject.toml') }}
 
       - name: Install library
         run: poetry install --no-interaction
+
+      - name: Verify install and offline smoke test
+        env:
+          OMP_NUM_THREADS: "1"
+          OPENBLAS_NUM_THREADS: "1"
+        run: |
+          poetry run python -m pip check
+          poetry run python scripts/install_smoke.py
 
       - name: Check format, lint and type
         run: make ci
